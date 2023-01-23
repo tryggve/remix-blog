@@ -14,17 +14,26 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x, 18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js 18.x
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 18.x
         cache: 'npm'
     - run: npm ci
     - run: npm run build --if-present
+
+    - name: Start server and mirror it with wget
+      run: |
+        yarn start &
+        sleep 10 &&
+        wget --mirror http://localhost:3000 -P out --no-host-directories --page-requisites --adjust-extension
+
+    - name: Upload GitHub Pages artifact
+      uses: actions/upload-pages-artifact@v1.0.7
+      with:
+        path: ./out
+
+    - name: Deploy GitHub Pages site
+      uses: actions/deploy-pages@v1.2.3
